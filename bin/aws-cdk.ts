@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from '@aws-cdk/core';
-import { AwsCdkStack } from '../lib/aws-cdk-stack';
+import "source-map-support/register";
+import * as cdk from "@aws-cdk/core";
+import { CdkStack } from "../lib/aws-cdk-stack";
 
 const app = new cdk.App();
-new AwsCdkStack(app, 'AwsCdkStack');
+new CdkStack(app, "ImageResizeCdk", { env: { region: "ap-northeast-2" } });
