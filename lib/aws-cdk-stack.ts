@@ -3,8 +3,7 @@ import * as lambda from "@aws-cdk/aws-lambda";
 import * as s3 from "@aws-cdk/aws-s3";
 import { LambdaDestination } from "@aws-cdk/aws-s3-notifications";
 import * as iam from "@aws-cdk/aws-iam";
-import * as cloudfront from "@aws-cdk/aws-cloudfront";
-
+import { AwsCustomResource } from "@aws-cdk/custom-resources"
 export class CdkStack extends cdk.Stack {
   private readonly BUCKET_NAME = "aram-image-resize-cdk-bucket";
   private readonly SOURCE_BUCKET = "image-resizing-test-nbbangdev";
@@ -24,7 +23,6 @@ export class CdkStack extends cdk.Stack {
 
     this.createResizeFunction();
     this.createResizedImageBucket();
-    this.createCloudFront();
   }
   createResizeFunction() {
     this.imageResizeFunction = new lambda.Function(
@@ -63,34 +61,10 @@ export class CdkStack extends cdk.Stack {
     }
 
     this.resizedImageBucket.grantReadWrite(this.imageResizeFunction);
-    this.resizedImageBucket.addObjectCreatedNotification(
+    this.resizedImageBucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
       new LambdaDestination(this.imageResizeFunction),
       { prefix: "images/" }
     );
-  }
-
-  createCloudFront() {
-    const oai = new cloudfront.OriginAccessIdentity(this, "imageResizeOAI", {
-      comment: `Allows CloudFront to reach to the ${this.BUCKET_NAME} bucket!`,
-    });
-    const cf = new cloudfront.CloudFrontWebDistribution(this, "imageDist", {
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: this.resizedImageBucket,
-            originPath: "/resize",
-            originAccessIdentity: oai,
-          },
-          behaviors: [
-            {
-              isDefaultBehavior: true,
-              defaultTtl: cdk.Duration.millis(86400 * 15),
-            },
-          ],
-        },
-      ],
-    });
-
-    console.log(`CloudFormatin Domain Name: ${cf.domainName}`);
   }
 }
